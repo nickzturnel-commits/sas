@@ -8,7 +8,11 @@ def message_urls(message) -> list[str]:
         url = getattr(entity, "url", None)
         if url:
             urls.append(url)
-    return list(dict.fromkeys(url.rstrip(".,;!?") for url in urls))
+    # Telegram posts sometimes place Markdown fences or escaped punctuation
+    # directly after a URL. Remove those suffix characters from both text and
+    # hidden-link entities before returning the subscription URL.
+    cleaned = (url.rstrip(".,;!?\\`") for url in urls)
+    return list(dict.fromkeys(cleaned))
 
 
 def subscription_url(message) -> str | None:
