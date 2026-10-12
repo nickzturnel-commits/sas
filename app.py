@@ -1,8 +1,8 @@
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import PlainTextResponse, RedirectResponse
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import PlainTextResponse
 from telethon import TelegramClient
 from dotenv import load_dotenv
 from subscription import subscription_url
@@ -30,8 +30,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(title="HappiVPN subscription relay", lifespan=lifespan)
 
 
-@app.get("/", include_in_schema=False)
-async def latest_subscription():
+async def current_subscription_url() -> str:
     try:
         messages = await client.get_messages(CHANNEL, limit=20)
     except Exception as exc:
@@ -42,10 +41,31 @@ async def latest_subscription():
             continue
         url = subscription_url(message)
         if url:
-            # VPN clients follow redirects and receive the channel's current
-            # subscription URL on every refresh request.
-            return RedirectResponse(url, status_code=302, headers={"Cache-Control": "no-store"})
+            return url
     raise HTTPException(status_code=404, detail="No subscription URL found in the latest channel posts.")
+
+
+async def serve_subscription(request: Request) -> Response:
+    headers = {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Content-Disposition": 'inline; filename="sub.txt"',
+    }
+    # Render's health probe uses HEAD. Respond without making a Telegram call.
+    if request.method == "HEAD":
+        return Response(status_code=200, media_type="text/plain", headers=headers)
+
+    url = await current_subscription_url()
+    return Response(content=url, media_type="text/plain", headers=headers)
+
+
+@app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
+async def latest_subscription(request: Request):
+    return await serve_subscription(request)
+
+
+@app.api_route("/sub.txt", methods=["GET", "HEAD"], include_in_schema=False)
+async def subscription_file(request: Request):
+    return await serve_subscription(request)
 
 
 @app.get("/health", response_class=PlainTextResponse)

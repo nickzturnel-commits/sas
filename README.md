@@ -1,6 +1,6 @@
 # Telegram subscription relay
 
-The Render service reads recent posts from `@happvpn` on every VPN-client refresh, finds the HTTPS `.../exec?url=...` subscription link, and responds with an HTTP redirect to that link. It ignores the `happ://` key and Telegram proxy links. The endpoint is `/`.
+The Render service reads recent posts from `@happvpn` on every VPN-client refresh, finds the HTTPS `.../exec?url=...` subscription link, and returns that URL itself as plain text (`text/plain`) without following it or redirecting. It ignores the `happ://` key and Telegram proxy links. Use `/` or `/sub.txt` as the endpoint; `/sub.txt` includes a `sub.txt` filename header.
 
 ## Create the Telegram session on your computer
 
@@ -11,7 +11,7 @@ The Render service reads recent posts from `@happvpn` on every VPN-client refres
 
 ## Check the setup and save the current link
 
-After creating the session, run `python check_channel.py`. It checks Telegram authorization and channel access, then writes the first matching current subscription URL to `latest_subscription_url.txt` in the project folder.
+After creating the session, run `python check_channel.py`. It checks Telegram authorization and channel access, then writes the first matching current subscription URL to `sub.txt` in the project folder.
 
 ## Deploy on Render
 
