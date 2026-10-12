@@ -1,5 +1,6 @@
 .env
 *.session
 *.session-journal
+session_base64.txt
 __pycache__/
 .venv/

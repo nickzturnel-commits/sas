@@ -6,13 +6,14 @@ from fastapi.responses import PlainTextResponse, RedirectResponse
 from telethon import TelegramClient
 from dotenv import load_dotenv
 from subscription import subscription_url
+from sessions import session_path_from_env
 
 
 load_dotenv()
 API_ID = int(os.environ["TELEGRAM_API_ID"])
 API_HASH = os.environ["TELEGRAM_API_HASH"]
 CHANNEL = os.getenv("TELEGRAM_CHANNEL", "happvpn")
-SESSION_FILE = os.getenv("TELEGRAM_SESSION_FILE", "/etc/secrets/telegram.session")
+SESSION_FILE = session_path_from_env(os.getenv("TELEGRAM_SESSION_FILE", "telegram.session"))
 
 client = TelegramClient(SESSION_FILE, API_ID, API_HASH)
 

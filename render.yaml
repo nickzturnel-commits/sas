@@ -10,7 +10,7 @@ services:
         sync: false
       - key: TELEGRAM_API_HASH
         sync: false
+      - key: TELEGRAM_SESSION_BASE64
+        sync: false
       - key: TELEGRAM_CHANNEL
         value: happvpn
-      - key: TELEGRAM_SESSION_FILE
-        value: /etc/secrets/telegram.session

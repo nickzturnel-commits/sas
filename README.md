@@ -15,6 +15,6 @@ After creating the session, run `python check_channel.py`. It checks Telegram au
 
 ## Deploy on Render
 
-Create a Render Web Service from this repository using `render.yaml`. Set `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` in the service environment. Add the generated `telegram.session` as a Render Secret File with the exact filename `telegram.session`; Render mounts it at `/etc/secrets/telegram.session` as configured. Deploy, then use `https://YOUR-SERVICE.onrender.com/` as the subscription URL in the VPN client.
+Create a Render Web Service from this repository using `render.yaml`. Set `TELEGRAM_API_ID` and `TELEGRAM_API_HASH` in the service environment. Run `python encode_session.py`; copy the complete contents of `session_base64.txt` into Render's secret environment variable `TELEGRAM_SESSION_BASE64`. The service decodes it into temporary storage at startup. Keep both the Base64 value and the generated text file private; they grant access to your Telegram account. Deploy, then use `https://YOUR-SERVICE.onrender.com/` as the subscription URL in the VPN client.
 
 Each client refresh causes a new Telegram lookup, so the next refresh picks up the newest matching post. Render's free service can sleep while idle; the first request after sleep may take longer. If the channel changes its post format or stops including an HTTPS `/exec?url=` link, the endpoint returns 404 until the format is adjusted.
