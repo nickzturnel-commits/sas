@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: telegram-subscription-relay
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: TELEGRAM_API_ID
+        sync: false
+      - key: TELEGRAM_API_HASH
+        sync: false
+      - key: TELEGRAM_CHANNEL
+        value: happvpn
+      - key: TELEGRAM_SESSION_FILE
+        value: /etc/secrets/telegram.session
