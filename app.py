@@ -122,13 +122,15 @@ async def serve_subscription(request: Request) -> Response:
     url = await current_subscription_url()
     upstream = await fetch_subscription(url, request)
 
+    # Все имена в нижнем регистре, иначе наши заголовки и заголовки апстрима
+    # дублируются (например, два Content-Disposition) и браузер/Happ отбрасывают ответ.
     headers = {
-        k: v for k, v in upstream.headers.items() if k.lower() not in SKIP_RESPONSE_HEADERS
+        k.lower(): v for k, v in upstream.headers.items() if k.lower() not in SKIP_RESPONSE_HEADERS
     }
     # subscription-userinfo, profile-title, profile-update-interval, routing и т.п.
     # остаются в headers и уходят клиенту как есть.
-    headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
-    headers.setdefault("Content-Disposition", 'inline; filename="sub.txt"')
+    headers["cache-control"] = "no-store, no-cache, must-revalidate"
+    headers.setdefault("content-disposition", 'inline; filename="sub.txt"')
 
     return Response(
         content=upstream.content,
