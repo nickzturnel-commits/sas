@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import os
 import re
 import time
@@ -18,6 +19,20 @@ API_ID = int(os.environ["TELEGRAM_API_ID"])
 API_HASH = os.environ["TELEGRAM_API_HASH"]
 CHANNEL = os.getenv("TELEGRAM_CHANNEL", "happvpn")
 SESSION_FILE = session_path_from_env(os.getenv("TELEGRAM_SESSION_FILE", "telegram.session"))
+
+# Метаданные профиля для Happ. Для JSON-подписки их можно передать только HTTP-заголовками.
+# Значения можно переопределить переменными окружения в Render. Пустое значение = не отправлять.
+PROFILE_TITLE = os.getenv("PROFILE_TITLE", "SaS")                       # Happ режет до 25 символов
+PROFILE_ANNOUNCE = os.getenv("PROFILE_ANNOUNCE", "🔒 Быстрый и стабильный VPN")  # до 200 символов
+PROFILE_UPDATE_INTERVAL = os.getenv("PROFILE_UPDATE_INTERVAL", "1")     # часы
+SUPPORT_URL = os.getenv("SUPPORT_URL", "")
+WEB_PAGE_URL = os.getenv("WEB_PAGE_URL", "")
+
+
+def _b64(text: str) -> str:
+    """HTTP-заголовки только latin-1, поэтому кириллицу и эмодзи отдаём как base64:..."""
+    return "base64:" + base64.b64encode(text.encode("utf-8")).decode("ascii")
+
 
 URL_CACHE_TTL = 60          # сколько секунд помнить ссылку из Telegram
 MAX_HOPS = 3                # сколько раз можно "пройти по ссылке в теле ответа"
@@ -129,6 +144,19 @@ async def serve_subscription(request: Request) -> Response:
     }
     # subscription-userinfo, profile-title, profile-update-interval, routing и т.п.
     # остаются в headers и уходят клиенту как есть.
+    # Свои метаданные профиля перекрывают апстримовские (иначе в Happ останется имя хоста)
+    for key in ("profile-title", "announce", "profile-update-interval", "support-url", "profile-web-page-url"):
+        headers.pop(key, None)
+    if PROFILE_TITLE:
+        headers["profile-title"] = _b64(PROFILE_TITLE)
+    if PROFILE_ANNOUNCE:
+        headers["announce"] = _b64(PROFILE_ANNOUNCE)
+    if PROFILE_UPDATE_INTERVAL:
+        headers["profile-update-interval"] = PROFILE_UPDATE_INTERVAL
+    if SUPPORT_URL:
+        headers["support-url"] = SUPPORT_URL
+    if WEB_PAGE_URL:
+        headers["profile-web-page-url"] = WEB_PAGE_URL
     headers["cache-control"] = "no-store, no-cache, must-revalidate"
     headers.setdefault("content-disposition", 'inline; filename="sub.txt"')
 
